@@ -5,7 +5,7 @@ pipeline {
         CI = 'true'
         NODE_ENV = 'test'
         SKIP_SERVER_START = 'true'
-        BASE_URL = 'http://localhost:5173'
+        BASE_URL = 'http://127.0.0.1:5173'
     }
 
     stages {
