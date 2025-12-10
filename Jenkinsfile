@@ -4,45 +4,58 @@ pipeline {
     environment {
         CI = 'true'
         NODE_ENV = 'test'
+        SKIP_SERVER_START = 'true'
+        BASE_URL = 'http://localhost:5173'
     }
 
     stages {
         stage('Checkout') {
             steps {
+                echo '📦 Descargando código del repositorio...'
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                bat 'npm install'
-                bat 'npx playwright install'
-            }
-        }
-
-        stage('Start Application') {
-            steps {
-                bat 'START /B npm run dev > app.log 2>&1'
-                bat 'timeout /t 10 /nobreak'
-                bat 'curl -f http://localhost:5173 || exit /b 1'
+                echo 'Instalando dependencias...'
+                script {
+                    if (isUnix()) {
+                        sh 'npm install'
+                        sh 'npx playwright install --with-deps'
+                    } else {
+                        bat 'npm install'
+                        bat 'npx playwright install --with-deps'
+                    }
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat 'npm run test:e2e'
+                echo "🧪 Ejecutando pruebas E2E contra: ${BASE_URL}"
+                script {
+                    if (isUnix()) {
+                        sh 'npm run test:e2e'
+                    } else {
+                        bat 'npm run test:e2e'
+                    }
+                }
             }
         }
     }
 
     post {
         always {
+            echo '📊 Generando reportes...'
+            
             // Publicar reportes de Playwright
             publishHTML([
                 reportDir: 'playwright-report',
                 reportFiles: 'index.html',
                 reportName: 'Playwright Report',
-                keepAll: true
+                keepAll: true,
+                allowMissing: true
             ])
 
             // Publicar resultados JUnit
@@ -50,11 +63,7 @@ pipeline {
 
             // Guardar artefactos
             archiveArtifacts artifacts: 'test-results/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'app.log', allowEmptyArchive: true
             archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
-
-            // Limpiar procesos Node
-            bat 'taskkill /F /IM node.exe /T || exit /b 0'
         }
         
         success {
