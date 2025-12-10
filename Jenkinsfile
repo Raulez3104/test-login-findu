@@ -10,6 +10,13 @@ pipeline {
     }
 
     stages {
+        stage('Clean') {
+            steps {
+                echo '🧹 Limpiando workspace anterior...'
+                bat 'rmdir /s /q FindU-Admin 2>nul || exit /b 0'
+            }
+        }
+
         stage('Checkout Tests') {
             steps {
                 echo '📦 Descargando código de tests...'
