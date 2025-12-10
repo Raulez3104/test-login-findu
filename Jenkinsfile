@@ -33,12 +33,18 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo '📥 Instalando dependencias...'
+                echo '📥 Instalando dependencias de tests...'
+                bat 'npm install && npx playwright install --with-deps'
+            }
+        }
+
+        stage('Install Frontend Dependencies') {
+            steps {
+                echo '📥 Instalando dependencias del frontend...'
                 bat '''
-                    npm install
-                    npx playwright install --with-deps
                     cd /d FindU-Admin
                     npm install
+                    cd ..
                 '''
             }
         }
