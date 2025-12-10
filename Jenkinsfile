@@ -42,7 +42,7 @@ pipeline {
                 bat '''
                     cd /d FindU-Admin
                     START /B npm run dev
-                    timeout /t 20 /nobreak
+                    ping -n 21 127.0.0.1 > nul
                 '''
             }
         }
