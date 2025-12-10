@@ -4,6 +4,7 @@ pipeline {
     environment {
         CI = 'true'
         NODE_ENV = 'test'
+        SKIP_SERVER_START = 'true'
         BASE_URL = 'http://127.0.0.1:5173'
         FRONTEND_REPO = 'https://github.com/Raulez3104/FindU-Admin.git'
         FRONTEND_DIR = '${WORKSPACE}/FindU-Admin'
@@ -63,7 +64,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 echo "🧪 Ejecutando pruebas E2E contra: ${BASE_URL}"
-                bat 'npm run test:e2e'
+                bat 'set SKIP_SERVER_START=true && npm run test:e2e'
             }
         }
     }
