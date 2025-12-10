@@ -48,7 +48,7 @@ pipeline {
                         bat '''
                             cd /d "%APP_DIR%"
                             call npm install
-                            START /B npm run dev > "%WORKSPACE%\\app.log" 2>&1
+                            START /B npm run dev
                             timeout /t 15 /nobreak
                         '''
                     }
