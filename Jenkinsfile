@@ -6,19 +6,20 @@ pipeline {
         NODE_ENV = 'test'
         SKIP_SERVER_START = 'true'
         BASE_URL = 'http://127.0.0.1:5173'
+        APP_DIR = 'C:\\laragon\\www\\findu-admin'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Tests') {
             steps {
-                echo '📦 Descargando código del repositorio...'
+                echo '📦 Descargando código de tests...'
                 checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Test Dependencies') {
             steps {
-                echo 'Instalando dependencias...'
+                echo '📥 Instalando dependencias de tests...'
                 script {
                     if (isUnix()) {
                         sh 'npm install'
@@ -26,6 +27,30 @@ pipeline {
                     } else {
                         bat 'npm install'
                         bat 'npx playwright install --with-deps'
+                    }
+                }
+            }
+        }
+
+        stage('Start Application') {
+            steps {
+                echo '🚀 Iniciando aplicación React...'
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            cd "${APP_DIR}"
+                            npm install
+                            npm run dev > ${WORKSPACE}/app.log 2>&1 &
+                            sleep 15
+                            curl -f http://127.0.0.1:5173 || exit 1
+                        '''
+                    } else {
+                        bat '''
+                            cd /d "%APP_DIR%"
+                            call npm install
+                            START /B npm run dev > "%WORKSPACE%\\app.log" 2>&1
+                            timeout /t 15 /nobreak
+                        '''
                     }
                 }
             }
@@ -65,6 +90,16 @@ pipeline {
             // Guardar artefactos
             archiveArtifacts artifacts: 'test-results/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'app.log', allowEmptyArchive: true
+
+            // Limpiar procesos Node
+            script {
+                if (isUnix()) {
+                    sh 'pkill -f "npm run dev" || true'
+                } else {
+                    bat 'taskkill /F /IM node.exe /T 2>nul || exit /b 0'
+                }
+            }
         }
         
         success {
